@@ -1,0 +1,26 @@
+name: Build APK
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q "Google Wallet.zip" -d app_src
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.3.1
+      - name: Create debug keystore
+        working-directory: app_src
+        run: keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+      - name: Build
+        working-directory: app_src
+        run: gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GoogleWallet-apk
+          path: app_src/app/build/outputs/apk/debug/*.apk
